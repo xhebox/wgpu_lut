@@ -11,14 +11,13 @@ path = "src/lib.rs"
 
 [[bench]]
 name = "process"
-harness = false
 
 [[bin]]
 name = "apply"
 path = "src/bin/apply.rs"
 
 [dependencies]
-wgpu = { version = "0.7", features = ["trace"] }
+wgpu = "0.7"
 wgpu-subscriber = "0.1"
 dashmap = "4.0"
 clap = "2.0"
@@ -33,4 +32,5 @@ glsl-to-spirv = "0.1.4"
 
 [dev-dependencies]
 criterion = { version = "0.3", features = ["async_std"] }
+wgpu = { version = "0.7", features = ["trace"] }
 laboratory = "1"

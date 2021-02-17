@@ -1,0 +1,13 @@
+[package]
+name = "gfx-backend-gl"
+version = "0.7.0"
+authors = ["xhe <xw897002528@gmail.com>"]
+edition = "2018"
+
+[features]
+default = []
+cross = []
+naga = []
+
+[dependencies]
+gfx-backend-empty = "0.7"

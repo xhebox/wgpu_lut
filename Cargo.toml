@@ -1,3 +1,20 @@
-[workspace]
+cargo-features = ["strip"]
 
-members = ["wgpu_lut", "wgpu_lut_c"]
+[workspace]
+members = [
+  "wgpu_lut",
+  "wgpu_lut_c",
+  "gfx-backend-dx11",
+  "gfx-backend-dx12",
+  "gfx-backend-gl",
+]
+
+[profile.release]
+panic = 'abort'
+strip = "debuginfo"
+lto = true
+
+[patch.crates-io]
+gfx-backend-gl = { path = "./gfx-backend-gl" }
+gfx-backend-dx11 = { path = "./gfx-backend-dx11" }
+gfx-backend-dx12 = { path = "./gfx-backend-dx12" }

@@ -1,0 +1,8 @@
+[package]
+name = "gfx-backend-dx12"
+version = "0.7.0"
+authors = ["xhe <xw897002528@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+gfx-backend-empty = "0.7"
