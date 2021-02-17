@@ -3,8 +3,7 @@ name = "wgpu_lut_c"
 version = "0.1.0"
 authors = ["xhe <xw897002528@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+publish = false
 
 [lib]
 name = "wgpu_lut_c"
