@@ -1,6 +1,7 @@
 use anyhow::Error;
 use async_std::task::block_on;
 use lazy_static::lazy_static;
+use std::mem::size_of;
 use std::{ffi::CStr, os::raw::c_char, slice};
 use wgpu_lut::Processor;
 
@@ -35,6 +36,44 @@ pub extern "C" fn add_lut(
 	};
 	if P.add_lut(n, f, l).is_err() {
 		return -4;
+	}
+	return 0;
+}
+
+#[no_mangle]
+pub extern "C" fn add_lut_raw(name: *const c_char, lut_dim: u32, lut: *const f32) -> isize {
+	let (n, d) = unsafe {
+		let n = CStr::from_ptr(name).to_str();
+		if n.is_err() {
+			return -1;
+		}
+		let d = slice::from_raw_parts(
+			lut,
+			((lut_dim * lut_dim * lut_dim) as usize) * 3 * size_of::<f32>(),
+		);
+		(n.unwrap(), d)
+	};
+	if P.add_lut_raw(n, lut_dim, d).is_err() {
+		return -2;
+	}
+	return 0;
+}
+
+#[no_mangle]
+pub extern "C" fn add_lut_raw_alpha(name: *const c_char, lut_dim: u32, lut: *const u8) -> isize {
+	let (n, d) = unsafe {
+		let n = CStr::from_ptr(name).to_str();
+		if n.is_err() {
+			return -1;
+		}
+		let d = slice::from_raw_parts(
+			lut,
+			((lut_dim * lut_dim * lut_dim) as usize) * 4 * size_of::<f32>(),
+		);
+		(n.unwrap(), d)
+	};
+	if P.add_lut_raw_alpha(n, lut_dim, d).is_err() {
+		return -2;
 	}
 	return 0;
 }
@@ -75,7 +114,7 @@ pub extern "C" fn process(
 		if f.is_err() {
 			return -3;
 		}
-		let d = slice::from_raw_parts_mut(data, data_len as usize);
+		let d = slice::from_raw_parts_mut(data, (data_len as usize) * size_of::<u8>());
 		(l.unwrap(), n.unwrap(), f.unwrap(), d)
 	};
 	if block_on(async { P.process(l, s, f, width, height, d).await }).is_err() {

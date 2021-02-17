@@ -5,13 +5,18 @@ mod utils;
 
 use anyhow::{anyhow, bail, Result};
 use dashmap::DashMap;
-use formats::*;
 use std::{borrow::Cow, convert::TryFrom, mem::size_of, ptr};
 use wgpu;
 
 // remember modify the shader, too
 const WORKGROUP_SIZE: u32 = 32;
 include!(concat!(env!("OUT_DIR"), "/shader_lut.rs"));
+
+#[derive(Debug)]
+struct LUT {
+	texture: wgpu::Texture,
+	texture_view: wgpu::TextureView,
+}
 
 #[derive(Debug)]
 pub struct Processor {
@@ -86,6 +91,111 @@ where {
 		})
 	}
 
+	// r + g * N + b * N * N
+	pub fn add_lut_raw(&self, name: &str, dim: u32, lut: &[f32]) -> Result<()> {
+		if lut.len() != (dim * dim * dim * 3) as usize {
+			bail!(
+				"you should provide {} * {} * {} * 3(rgb) floats",
+				dim,
+				dim,
+				dim
+			);
+		}
+		let mut data = Vec::new();
+		for i in lut.chunks(3) {
+			for j in i {
+				data.extend(j.to_ne_bytes().iter());
+			}
+			data.extend(1f32.to_ne_bytes().iter());
+		}
+		self.add_lut_raw_alpha(name, dim, data.as_slice())?;
+		Ok(())
+	}
+
+	pub fn add_lut_raw_alpha(&self, name: &str, dim: u32, lut: &[u8]) -> Result<()> {
+		if lut.len() != ((dim * dim * dim) as usize) * 4 * size_of::<f32>() {
+			bail!(
+				"you should provide {} * {} * {} * 4(rgba) * sizeof(f32)",
+				dim,
+				dim,
+				dim
+			);
+		}
+		let device = &self.device;
+
+		let texture_size = wgpu::Extent3d {
+			width: dim,
+			height: dim,
+			depth: dim,
+		};
+
+		let texture = device.create_texture(&wgpu::TextureDescriptor {
+			label: None,
+			size: texture_size,
+			mip_level_count: 1,
+			sample_count: 1,
+			dimension: wgpu::TextureDimension::D3,
+			format: wgpu::TextureFormat::Rgba32Float,
+			usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::SAMPLED,
+		});
+
+		let buffer_align = utils::BufferAlign::new(dim * dim * dim, (size_of::<f32>() * 4) as u32);
+
+		let staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+			label: None,
+			size: u64::try_from(buffer_align.padded_bytes_per_row)?,
+			usage: wgpu::BufferUsage::MAP_WRITE | wgpu::BufferUsage::COPY_SRC,
+			mapped_at_creation: true,
+		});
+
+		{
+			let slice = staging_buffer.slice(..);
+			let mut buf = slice.get_mapped_range_mut();
+			for (dst, src) in buf
+				.chunks_mut(buffer_align.padded_bytes_per_row as usize)
+				.zip(lut.chunks(buffer_align.unpadded_bytes_per_row as usize))
+			{
+				unsafe {
+					ptr::copy_nonoverlapping(
+						&src[0],
+						&mut dst[0],
+						buffer_align.unpadded_bytes_per_row as usize,
+					);
+				}
+			}
+			drop(slice);
+		}
+
+		self.queue.write_texture(
+			wgpu::TextureCopyView {
+				texture: &texture,
+				mip_level: 0,
+				origin: wgpu::Origin3d::ZERO,
+			},
+			lut,
+			wgpu::TextureDataLayout {
+				offset: 0,
+				bytes_per_row: (size_of::<f32>() * 4) as u32 * texture_size.width,
+				rows_per_image: texture_size.height,
+			},
+			texture_size,
+		);
+
+		device.poll(wgpu::Maintain::Wait);
+
+		let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+		self.luts.insert(
+			name.to_string(),
+			LUT {
+				texture,
+				texture_view,
+			},
+		);
+
+		Ok(())
+	}
+
 	pub fn add_lut<I: std::io::Read>(&self, name: &str, format: &str, lut: I) -> Result<()> {
 		if self.luts.contains_key(name) {
 			return Ok(());
@@ -94,11 +204,12 @@ where {
 		let lutc;
 		match format {
 			"cube" => {
-				lutc = formats::cube(self, lut)?;
+				lutc = formats::cube(lut)?;
 			}
 			_ => bail!("unsupported lut format"),
 		}
-		self.luts.insert(name.to_string(), lutc);
+
+		self.add_lut_raw_alpha(name, lutc.0, lutc.1.as_slice())?;
 		Ok(())
 	}
 

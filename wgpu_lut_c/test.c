@@ -4,17 +4,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef uint8_t (*add_lut_t)(char *name,
-														 char *format,
-														 uint8_t *const lut,
+typedef uint8_t (*add_lut_t)(const char *name,		// lut table name, unique
+														 const char *format,	// "cube"(.cube)
+														 const uint8_t *lut,
 														 uint64_t lut_len);
-typedef uint8_t (*del_lut_t)(char *name);
-typedef uint8_t (*process_t)(char *lut,
-														 char *sampler,
-														 char *format,
+typedef uint8_t (*add_lut_raw_t)(
+		const char *name,
+		uint32_t lut_dim,
+		const uint8_t *lut);	// dim * dim * dim * 3(rgb) * f32 array, it is slow
+typedef uint8_t (*add_lut_raw_alpha_t)(
+		const char *name,
+		uint32_t lut_dim,
+		const uint8_t *lut);	// dim * dim * dim * 4(rgba) * f32 array
+typedef uint8_t (*del_lut_t)(const char *name);
+typedef uint8_t (*process_t)(const char *lut,
+														 const char *sampler,
+														 const char *format,
 														 uint32_t width,
 														 uint32_t height,
-														 uint8_t *const data,
+														 const uint8_t *data,
 														 uint64_t data_len);
 char *const lut =
 		"TITLE \"Generate by Resolve\"\n"
@@ -35,6 +43,9 @@ int main(void) {
 	}
 
 	add_lut_t add_lut = (add_lut_t)dlsym(handle, "add_lut");
+	add_lut_raw_t add_lut_raw = (add_lut_raw_t)dlsym(handle, "add_lut_raw");
+	add_lut_raw_alpha_t add_lut_raw_alpha =
+			(add_lut_raw_alpha_t)dlsym(handle, "add_lut_raw_alpha");
 	del_lut_t del_lut = (del_lut_t)dlsym(handle, "del_lut");
 	process_t process = (process_t)dlsym(handle, "process");
 
