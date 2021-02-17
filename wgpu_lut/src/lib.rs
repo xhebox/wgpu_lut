@@ -102,7 +102,7 @@ where {
 		Ok(())
 	}
 
-	pub fn del_lut<I: std::io::Read>(&self, name: &str) {
+	pub fn del_lut(&self, name: &str) {
 		self.luts.remove(name);
 	}
 

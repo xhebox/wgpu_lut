@@ -42,11 +42,11 @@ pub extern "C" fn add_lut(
 #[no_mangle]
 pub extern "C" fn del_lut(lut: *const c_char) -> isize {
 	let n = unsafe {
-		let n = CStr::from_ptr(name).to_str();
+		let n = CStr::from_ptr(lut).to_str();
 		if n.is_err() {
 			return -1;
 		}
-		n
+		n.unwrap()
 	};
 	P.del_lut(n);
 	return 0;
