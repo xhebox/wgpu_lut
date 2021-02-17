@@ -1,4 +1,3 @@
-//use gfx_auxil;
 use anyhow::{anyhow, Result};
 use std::env;
 use std::fs;

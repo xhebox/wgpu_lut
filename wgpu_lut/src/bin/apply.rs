@@ -55,7 +55,7 @@ fn main() {
 
 		let mut img_rgba8 = img.to_rgba8();
 
-		let mut p = Processor::new(true).await?;
+		let p = Processor::new(true).await?;
 
 		p.add_lut("test", "cube", fs::read_to_string(lut)?.as_bytes())?;
 
