@@ -20,22 +20,35 @@ pub extern "C" fn add_lut(
 	format: *const c_char,
 	lut: *const u8,
 	lut_len: u64,
-) -> u8 {
+) -> isize {
 	let (n, f, l) = unsafe {
 		let n = CStr::from_ptr(name).to_str();
 		if n.is_err() {
-			return 1;
+			return -1;
 		}
 		let f = CStr::from_ptr(format).to_str();
 		if f.is_err() {
-			return 2;
+			return -2;
 		}
 		let l = slice::from_raw_parts(lut, lut_len as usize);
 		(n.unwrap(), f.unwrap(), l)
 	};
 	if P.add_lut(n, f, l).is_err() {
-		return 4;
+		return -4;
 	}
+	return 0;
+}
+
+#[no_mangle]
+pub extern "C" fn del_lut(lut: *const c_char) -> isize {
+	let n = unsafe {
+		let n = CStr::from_ptr(name).to_str();
+		if n.is_err() {
+			return -1;
+		}
+		n
+	};
+	P.del_lut(n);
 	return 0;
 }
 
@@ -48,25 +61,25 @@ pub extern "C" fn process(
 	height: u32,
 	data: *mut u8,
 	data_len: u64,
-) -> u8 {
+) -> isize {
 	let (l, s, f, d) = unsafe {
 		let l = CStr::from_ptr(lut).to_str();
 		if l.is_err() {
-			return 1;
+			return -1;
 		}
 		let n = CStr::from_ptr(sampler).to_str();
 		if n.is_err() {
-			return 2;
+			return -2;
 		}
 		let f = CStr::from_ptr(format).to_str();
 		if f.is_err() {
-			return 3;
+			return -3;
 		}
 		let d = slice::from_raw_parts_mut(data, data_len as usize);
 		(l.unwrap(), n.unwrap(), f.unwrap(), d)
 	};
 	if block_on(async { P.process(l, s, f, width, height, d).await }).is_err() {
-		return 4;
+		return -4;
 	}
 	return 0;
 }
