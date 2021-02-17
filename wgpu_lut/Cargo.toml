@@ -1,0 +1,36 @@
+[package]
+name = "wgpu_lut"
+version = "0.1.0"
+edition = "2018"
+authors = ["xhebox <xw897002528@gmail.com>"]
+publish = false
+
+[lib]
+name = "wgpu_lut"
+path = "src/lib.rs"
+
+[[bench]]
+name = "process"
+harness = false
+
+[[bin]]
+name = "apply"
+path = "src/bin/apply.rs"
+
+[dependencies]
+wgpu = { version = "0.7", features = ["trace"] }
+wgpu-subscriber = "0.1"
+dashmap = "4.0"
+clap = "2.0"
+image = "0.23"
+async-std = "1.9"
+anyhow = "1.0"
+
+[build-dependencies]
+anyhow = "1.0"
+gfx-auxil = "0.8"
+glsl-to-spirv = "0.1.4"
+
+[dev-dependencies]
+criterion = { version = "0.3", features = ["async_std"] }
+laboratory = "1"

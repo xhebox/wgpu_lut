@@ -1,0 +1,3 @@
+[workspace]
+
+members = ["wgpu_lut", "wgpu_lut_c"]
