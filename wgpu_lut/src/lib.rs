@@ -26,10 +26,13 @@ pub struct Processor {
 impl Processor {
 	pub async fn new(validation: bool) -> Result<Self>
 where {
-		let instance = wgpu::Instance::new(wgpu::BackendBit::VULKAN);
+		let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
 
 		let adapter = instance
-			.request_adapter(&wgpu::RequestAdapterOptions::default())
+			.request_adapter(&wgpu::RequestAdapterOptions {
+				power_preference: wgpu::PowerPreference::HighPerformance,
+				..wgpu::RequestAdapterOptions::default()
+			})
 			.await
 			.ok_or(anyhow!("can not find a usable adapter"))?;
 
@@ -84,6 +87,10 @@ where {
 	}
 
 	pub fn add_lut<I: std::io::Read>(&self, name: &str, format: &str, lut: I) -> Result<()> {
+		if self.luts.contains_key(name) {
+			return Ok(());
+		}
+
 		let lutc;
 		match format {
 			"cube" => {
@@ -93,6 +100,10 @@ where {
 		}
 		self.luts.insert(name.to_string(), lutc);
 		Ok(())
+	}
+
+	pub fn del_lut<I: std::io::Read>(&self, name: &str) {
+		self.luts.remove(name);
 	}
 
 	pub async fn process(
