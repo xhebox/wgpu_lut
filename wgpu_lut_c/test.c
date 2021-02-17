@@ -8,6 +8,7 @@ typedef uint8_t (*add_lut_t)(char *name,
 														 char *format,
 														 uint8_t *const lut,
 														 uint64_t lut_len);
+typedef uint8_t (*del_lut_t)(char *name);
 typedef uint8_t (*process_t)(char *lut,
 														 char *sampler,
 														 char *format,
@@ -34,6 +35,7 @@ int main(void) {
 	}
 
 	add_lut_t add_lut = (add_lut_t)dlsym(handle, "add_lut");
+	del_lut_t del_lut = (del_lut_t)dlsym(handle, "del_lut");
 	process_t process = (process_t)dlsym(handle, "process");
 
 	add_lut("test", "cube", (uint8_t *const)lut, strlen(lut));
