@@ -26,7 +26,7 @@ pub struct Processor {
 impl Processor {
 	pub async fn new(validation: bool) -> Result<Self>
 where {
-		let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
+		let instance = wgpu::Instance::new(wgpu::BackendBit::VULKAN);
 
 		let adapter = instance
 			.request_adapter(&wgpu::RequestAdapterOptions {

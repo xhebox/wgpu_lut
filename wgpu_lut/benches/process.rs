@@ -1,7 +1,7 @@
 use anyhow::Error;
 use async_std::task::block_on;
 use criterion::{async_executor::AsyncStdExecutor, criterion_group, criterion_main, Criterion};
-use std::{mem::size_of, sync::Arc};
+use std::mem::size_of;
 use wgpu_lut::Processor;
 
 fn process(c: &mut Criterion) {
